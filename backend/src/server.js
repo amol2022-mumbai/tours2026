@@ -1,0 +1,74 @@
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), env: process.env.NODE_ENV || 'development' });
+});
+
+// API Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/leads', require('./routes/leads'));
+app.use('/api/customers', require('./routes/customers'));
+app.use('/api/tours', require('./routes/tours'));
+app.use('/api/itinerary', require('./routes/itinerary'));
+app.use('/api/quotations', require('./routes/quotations'));
+app.use('/api/bookings', require('./routes/bookings'));
+app.use('/api/payments', require('./routes/payments'));
+app.use('/api/suppliers', require('./routes/suppliers'));
+app.use('/api/expenses', require('./routes/expenses'));
+app.use('/api/profitability', require('./routes/profitability'));
+app.use('/api/documents', require('./routes/documents'));
+app.use('/api/reports', require('./routes/reports'));
+app.use('/api/staff', require('./routes/staff'));
+app.use('/api/marketing', require('./routes/marketing'));
+app.use('/api/reminders', require('./routes/reminders'));
+
+// Serve frontend in production
+if (isProduction) {
+  const frontendDist = path.join(__dirname, '../../frontend/dist');
+  if (fs.existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+        res.sendFile(path.join(frontendDist, 'index.html'));
+      }
+    });
+    console.log('Serving frontend from', frontendDist);
+  }
+}
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(err.status || 500).json({
+    error: isProduction ? 'Internal Server Error' : err.message
+  });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Tour Operator API running on port ${PORT}`);
+  console.log(`Mode: ${isProduction ? 'production' : 'development'}`);
+  console.log(`Health check: http://localhost:${PORT}/api/health`);
+});
+
+module.exports = app;
