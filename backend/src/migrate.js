@@ -408,19 +408,23 @@ async function migrate() {
 
     console.log('All migrations completed successfully.');
   } catch (err) {
-    console.error('Migration error:', err.message);
+    console.error('Migration error:', err.message || err.code || 'Unknown error');
     throw err;
   } finally {
     if (conn) conn.release();
   }
 }
 
-migrate()
-  .then(() => {
-    console.log('Migration finished.');
-    process.exit(0);
-  })
-  .catch((err) => {
-    console.error('Migration failed:', err);
-    process.exit(1);
-  });
+module.exports = { migrate };
+
+if (require.main === module) {
+  migrate()
+    .then(() => {
+      console.log('Migration finished.');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('Migration failed:', err);
+      process.exit(1);
+    });
+}

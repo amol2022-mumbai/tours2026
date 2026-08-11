@@ -7,6 +7,8 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const { migrate } = require('./migrate');
+
 const frontendDist = path.join(__dirname, '../../frontend/dist');
 const serveFrontend = fs.existsSync(frontendDist);
 
@@ -66,10 +68,31 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Tour Operator API running on port ${PORT}`);
-  console.log(`Mode: ${serveFrontend ? 'serving frontend + API' : 'API only'}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
-});
+async function start() {
+  try {
+    console.log('Checking database connection...');
+    await migrate();
+    console.log('Database migration completed.');
+
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Tour Operator API running on port ${PORT}`);
+      console.log(`Mode: ${serveFrontend ? 'serving frontend + API' : 'API only'}`);
+      console.log(`Health check: http://localhost:${PORT}/api/health`);
+    });
+  } catch (err) {
+    console.error('---');
+    console.error('DEPLOYMENT FAILED: Could not connect to database or run migrations.');
+    console.error('Error:', err.message);
+    console.error('---');
+    console.error('Check your environment variables:');
+    console.error('  DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME');
+    console.error('  Current DB_HOST:', process.env.DB_HOST || '(not set)');
+    console.error('  Current DB_NAME:', process.env.DB_NAME || '(not set)');
+    console.error('---');
+    process.exit(1);
+  }
+}
+
+start();
 
 module.exports = app;
