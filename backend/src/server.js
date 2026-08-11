@@ -2,21 +2,30 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config();
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 const { migrate } = require('./migrate');
 
-const frontendDist = path.join(__dirname, '../../frontend/dist');
-const serveFrontend = fs.existsSync(frontendDist);
+const frontendDist = path.resolve(__dirname, '..', '..', 'frontend', 'dist');
+const hasFrontend = fs.existsSync(frontendDist) && fs.existsSync(path.join(frontendDist, 'index.html'));
+
+console.log('=== Startup Diagnostics ===');
+console.log('__dirname:', __dirname);
+console.log('frontendDist (resolved):', frontendDist);
+console.log('frontendDist exists:', fs.existsSync(frontendDist));
+console.log('index.html exists:', hasFrontend ? path.join(frontendDist, 'index.html') : 'MISSING');
+console.log('CWD:', process.cwd());
+console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
+console.log('PORT:', PORT);
 
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.resolve(__dirname, '..', 'uploads')));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -42,69 +51,83 @@ app.use('/api/staff', require('./routes/staff'));
 app.use('/api/marketing', require('./routes/marketing'));
 app.use('/api/reminders', require('./routes/reminders'));
 
-// Serve frontend static files when the build exists
-if (serveFrontend) {
-  app.use(express.static(frontendDist));
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
-      res.sendFile(path.join(frontendDist, 'index.html'));
-    }
-  });
-  console.log('Serving frontend from', frontendDist);
-} else {
-  console.log('Frontend build not found at', frontendDist, '- running API only');
-}
-
-// 404 handler for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+// 404 for unmatched /api routes
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API route not found' });
 });
 
+// Serve frontend static files
+if (hasFrontend) {
+  app.use(express.static(frontendDist));
+
+  // SPA catch-all: return index.html for any non-API, non-uploads GET request
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+      res.sendFile(path.join(frontendDist, 'index.html'), (err) => {
+        if (err) {
+          console.error('Failed to send index.html:', err.message);
+          res.status(500).json({ error: 'Failed to load frontend' });
+        }
+      });
+    }
+  });
+  console.log('Mode: serving frontend + API');
+} else {
+  console.log('Mode: API only (frontend/dist not found)');
+}
+
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error('Server error:', err);
   res.status(err.status || 500).json({
-    error: serveFrontend ? 'Internal Server Error' : err.message
+    error: 'Internal Server Error'
   });
 });
 
 async function start() {
-  try {
-    if (process.env.SKIP_MIGRATION === 'true') {
-      console.log('SKIP_MIGRATION=true -- skipping database connection and migration');
-    } else {
+  let dbOk = false;
+
+  if (process.env.SKIP_MIGRATION === 'true') {
+    console.log('SKIP_MIGRATION=true -- skipping database connection and migration');
+    dbOk = false;
+  } else {
+    try {
       console.log('Checking database connection...');
       await migrate();
       console.log('Database migration completed.');
+      dbOk = true;
+    } catch (err) {
+      console.error('---');
+      console.error('WARNING: Database connection or migration failed.');
+      console.error('Error code:', err.code || 'UNKNOWN');
+      console.error('Error message:', err.message);
+      console.error('---');
+      console.error('The server will start without a database connection.');
+      console.error('Frontend pages will load, but API endpoints will return errors.');
+      console.error('---');
+      console.error('Debug info:');
+      console.error('  DB_HOST:', process.env.DB_HOST || '(not set)');
+      console.error('  DB_PORT:', process.env.DB_PORT || '(not set)');
+      console.error('  DB_USER:', process.env.DB_USER || '(not set)');
+      console.error('  DB_NAME:', process.env.DB_NAME || '(not set)');
+      console.error('  DB_SSL:', process.env.DB_SSL || '(not set)');
+      console.error('  DB_PASSWORD is set:', !!process.env.DB_PASSWORD);
+      console.error('---');
     }
-
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Tour Operator API running on port ${PORT}`);
-      console.log(`Mode: ${serveFrontend ? 'serving frontend + API' : 'API only'}`);
-      console.log(`Health check: http://localhost:${PORT}/api/health`);
-    });
-  } catch (err) {
-    console.error('---');
-    console.error('DEPLOYMENT FAILED: Could not connect to database or run migrations.');
-    console.error('Error code:', err.code || 'UNKNOWN');
-    console.error('Error message:', err.message);
-    console.error('---');
-    console.error('Check your environment variables:');
-    console.error('  DB_HOST:', process.env.DB_HOST || '(not set)');
-    console.error('  DB_PORT:', process.env.DB_PORT || '(not set)');
-    console.error('  DB_USER:', process.env.DB_USER || '(not set)');
-    console.error('  DB_NAME:', process.env.DB_NAME || '(not set)');
-    console.error('  DB_SSL:', process.env.DB_SSL || '(not set)');
-    console.error('  (DB_PASSWORD is set) :', !!process.env.DB_PASSWORD);
-    console.error('---');
-    console.error('Common fixes:');
-    console.error('  1. Verify MySQL credentials in Hostinger env vars');
-    console.error('  2. Ensure MySQL user has access from Hostinger app server');
-    console.error('  3. Try DB_SSL=true if Hostinger requires SSL');
-    console.error('  4. Test with SKIP_MIGRATION=true to isolate DB issue');
-    console.error('---');
-    process.exit(1);
   }
+
+  app.locals.dbConnected = dbOk;
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log('========================================');
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Database: ${dbOk ? 'CONNECTED' : 'NOT CONNECTED'}`);
+    console.log(`Health check: http://localhost:${PORT}/api/health`);
+    if (hasFrontend) {
+      console.log(`Frontend: http://localhost:${PORT}/`);
+    }
+    console.log('========================================');
+  });
 }
 
 start();
