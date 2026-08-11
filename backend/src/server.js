@@ -70,9 +70,13 @@ app.use((err, req, res, next) => {
 
 async function start() {
   try {
-    console.log('Checking database connection...');
-    await migrate();
-    console.log('Database migration completed.');
+    if (process.env.SKIP_MIGRATION === 'true') {
+      console.log('SKIP_MIGRATION=true -- skipping database connection and migration');
+    } else {
+      console.log('Checking database connection...');
+      await migrate();
+      console.log('Database migration completed.');
+    }
 
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Tour Operator API running on port ${PORT}`);

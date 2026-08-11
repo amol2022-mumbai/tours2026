@@ -4,13 +4,13 @@
   "description": "Tour Operator Management System - Full Stack Application",
   "private": true,
   "scripts": {
-    "postinstall": "cd backend && npm install && cd ../frontend && npm install && npm run build",
+    "postinstall": "cd backend && npm install && cd ../frontend && npm install",
     "start": "node backend/src/server.js",
     "build": "cd frontend && npm run build",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   }
 }
