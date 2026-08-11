@@ -6,7 +6,9 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const isProduction = process.env.NODE_ENV === 'production';
+
+const frontendDist = path.join(__dirname, '../../frontend/dist');
+const serveFrontend = fs.existsSync(frontendDist);
 
 // Middleware
 app.use(cors());
@@ -38,18 +40,17 @@ app.use('/api/staff', require('./routes/staff'));
 app.use('/api/marketing', require('./routes/marketing'));
 app.use('/api/reminders', require('./routes/reminders'));
 
-// Serve frontend in production
-if (isProduction) {
-  const frontendDist = path.join(__dirname, '../../frontend/dist');
-  if (fs.existsSync(frontendDist)) {
-    app.use(express.static(frontendDist));
-    app.get('*', (req, res) => {
-      if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
-        res.sendFile(path.join(frontendDist, 'index.html'));
-      }
-    });
-    console.log('Serving frontend from', frontendDist);
-  }
+// Serve frontend static files when the build exists
+if (serveFrontend) {
+  app.use(express.static(frontendDist));
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+      res.sendFile(path.join(frontendDist, 'index.html'));
+    }
+  });
+  console.log('Serving frontend from', frontendDist);
+} else {
+  console.log('Frontend build not found at', frontendDist, '- running API only');
 }
 
 // 404 handler for API routes
@@ -61,13 +62,13 @@ app.use('/api/*', (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(err.status || 500).json({
-    error: isProduction ? 'Internal Server Error' : err.message
+    error: serveFrontend ? 'Internal Server Error' : err.message
   });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Tour Operator API running on port ${PORT}`);
-  console.log(`Mode: ${isProduction ? 'production' : 'development'}`);
+  console.log(`Mode: ${serveFrontend ? 'serving frontend + API' : 'API only'}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
 });
 
