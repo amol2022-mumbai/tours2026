@@ -10,8 +10,10 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10', 10),
   queueLimit: 0,
+  connectTimeout: 15000,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 0,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
 });
 
 module.exports = pool;

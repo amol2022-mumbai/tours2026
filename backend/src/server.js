@@ -86,12 +86,22 @@ async function start() {
   } catch (err) {
     console.error('---');
     console.error('DEPLOYMENT FAILED: Could not connect to database or run migrations.');
-    console.error('Error:', err.message);
+    console.error('Error code:', err.code || 'UNKNOWN');
+    console.error('Error message:', err.message);
     console.error('---');
     console.error('Check your environment variables:');
-    console.error('  DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME');
-    console.error('  Current DB_HOST:', process.env.DB_HOST || '(not set)');
-    console.error('  Current DB_NAME:', process.env.DB_NAME || '(not set)');
+    console.error('  DB_HOST:', process.env.DB_HOST || '(not set)');
+    console.error('  DB_PORT:', process.env.DB_PORT || '(not set)');
+    console.error('  DB_USER:', process.env.DB_USER || '(not set)');
+    console.error('  DB_NAME:', process.env.DB_NAME || '(not set)');
+    console.error('  DB_SSL:', process.env.DB_SSL || '(not set)');
+    console.error('  (DB_PASSWORD is set) :', !!process.env.DB_PASSWORD);
+    console.error('---');
+    console.error('Common fixes:');
+    console.error('  1. Verify MySQL credentials in Hostinger env vars');
+    console.error('  2. Ensure MySQL user has access from Hostinger app server');
+    console.error('  3. Try DB_SSL=true if Hostinger requires SSL');
+    console.error('  4. Test with SKIP_MIGRATION=true to isolate DB issue');
     console.error('---');
     process.exit(1);
   }
