@@ -214,6 +214,7 @@ async function migrate() {
       payment_date DATE NOT NULL,
       transaction_id VARCHAR(100),
       receipt_number VARCHAR(50),
+      status ENUM('completed','pending','failed') DEFAULT 'completed',
       notes TEXT,
       created_by INT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -221,6 +222,15 @@ async function migrate() {
       FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
       FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    try {
+      await conn.query(`ALTER TABLE payments ADD COLUMN status ENUM('completed','pending','failed') DEFAULT 'completed' AFTER receipt_number`);
+      console.log('  Added status column to payments table');
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME') {
+        throw err;
+      }
+    }
 
     // 11. expenses
     await conn.query(`CREATE TABLE IF NOT EXISTS expenses (

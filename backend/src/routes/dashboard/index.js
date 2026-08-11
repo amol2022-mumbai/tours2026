@@ -12,13 +12,6 @@ router.get('/', async (req, res) => {
 
     const salesFilter = userRole === 'sales' ? 'WHERE assigned_to = ?' : '';
     const salesParams = userRole === 'sales' ? [userId] : [];
-    const salesBookFilter = userRole === 'sales' ? 'WHERE created_by = ?' : '';
-    const salesBookParams = userRole === 'sales' ? [userId] : [];
-
-    const addSalesWhere = (base, userClause) => {
-      if (userRole !== 'sales') return base;
-      return base ? `${base} AND ${userClause}` : `WHERE ${userClause}`;
-    };
 
     // --- KPI CARDS ---
     const [[{ newEnquiries }]] = await pool.query(
@@ -27,22 +20,22 @@ router.get('/', async (req, res) => {
     );
 
     const [[{ activeLeads }]] = await pool.query(
-      `SELECT COUNT(*) AS activeLeads FROM leads ${addSalesWhere(salesFilter, 'assigned_to = ?')} AND status IN ('new','quotation','followup')`,
+      `SELECT COUNT(*) AS activeLeads FROM leads ${userRole === 'sales' ? 'WHERE assigned_to = ? AND' : 'WHERE'} status IN ('new','quotation','followup')`,
       userRole === 'sales' ? [userId] : []
     );
 
     const [[{ confirmedBookings }]] = await pool.query(
-      `SELECT COUNT(*) AS confirmedBookings FROM bookings ${addSalesWhere(salesBookFilter, 'created_by = ?')} AND status = 'confirmed'`,
+      `SELECT COUNT(*) AS confirmedBookings FROM bookings ${userRole === 'sales' ? 'WHERE created_by = ? AND' : 'WHERE'} status = 'confirmed'`,
       userRole === 'sales' ? [userId] : []
     );
 
     const [[{ upcomingTours }]] = await pool.query(
-      `SELECT COUNT(*) AS upcomingTours FROM bookings ${addSalesWhere(salesBookFilter, 'created_by = ?')} AND status IN ('confirmed','pending') AND travel_start_date >= CURDATE()`,
+      `SELECT COUNT(*) AS upcomingTours FROM bookings ${userRole === 'sales' ? 'WHERE created_by = ? AND' : 'WHERE'} status IN ('confirmed','pending') AND travel_start_date >= CURDATE()`,
       userRole === 'sales' ? [userId] : []
     );
 
     const [[{ pendingPayments }]] = await pool.query(
-      `SELECT COUNT(*) AS pendingPayments FROM bookings ${addSalesWhere(salesBookFilter, 'created_by = ?')} AND balance_amount > 0 AND status != 'cancelled'`,
+      `SELECT COUNT(*) AS pendingPayments FROM bookings ${userRole === 'sales' ? 'WHERE created_by = ? AND' : 'WHERE'} balance_amount > 0 AND status != 'cancelled'`,
       userRole === 'sales' ? [userId] : []
     );
 
