@@ -64,6 +64,21 @@
 }
 .sidebar-user-role { font-size: 0.72rem; color: #64748b; text-transform: capitalize; }
 
+/* Collapse toggle button (desktop only) */
+.sidebar-collapse-btn {
+  display: none;
+  width: 100%; align-items: center; gap: 10px; padding: 8px 16px;
+  background: none; border: none; color: #64748b; font-size: 0.8rem;
+  cursor: pointer; border-radius: 6px; transition: all 0.15s;
+  margin-bottom: 10px;
+}
+.sidebar-collapse-btn:hover {
+  color: #e2e8f0; background: rgba(255,255,255,0.06);
+}
+.sidebar-collapse-btn svg { flex-shrink: 0; opacity: 0.7; }
+.sidebar-collapse-btn:hover svg { opacity: 1; }
+.sidebar-collapse-text { white-space: nowrap; }
+
 /* Mobile: sidebar slides in as overlay */
 @media (max-width: 1023px) {
   .sidebar {
@@ -87,4 +102,52 @@
   .sidebar.collapsed .sidebar-link { justify-content: center; padding: 12px; }
   .sidebar.collapsed .sidebar-brand { justify-content: center; padding: 18px 0; }
   .sidebar.collapsed .sidebar-user { justify-content: center; }
+  .sidebar.collapsed .sidebar-collapse-text { display: none; }
+  .sidebar.collapsed .sidebar-collapse-btn { justify-content: center; padding: 8px 0; }
+  .sidebar-collapse-btn { display: flex; }
+
+  .sidebar-section {
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .sidebar-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+  .sidebar.collapsed .sidebar-section {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .sidebar-link {
+    border-radius: 6px;
+    margin: 1px 8px;
+    padding: 9px 12px;
+  }
+  .sidebar-link.active {
+    background: rgba(59,130,246,0.2);
+  }
+  .sidebar.collapsed .sidebar-link {
+    margin: 1px 8px;
+    border-radius: 8px;
+  }
+
+  .sidebar-section-label {
+    padding: 12px 20px 4px;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+  }
+
+  .sidebar-brand {
+    padding: 20px 18px;
+  }
+
+  .sidebar-footer {
+    padding: 8px 12px;
+  }
+  .sidebar.collapsed .sidebar-footer {
+    padding: 8px 6px;
+  }
 }
