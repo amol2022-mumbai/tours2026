@@ -79,9 +79,9 @@ export default function LeadDetail() {
         <div className="card">
           <div className="card-header"><h3>Follow-ups</h3></div>
           <form onSubmit={addFollowup} style={{ marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <input type="date" className="form-control" style={{ width: '150px' }} value={followupForm.followup_date} onChange={(e) => setFollowupForm({ ...followupForm, followup_date: e.target.value })} required />
-            <input type="time" className="form-control" style={{ width: '120px' }} value={followupForm.followup_time} onChange={(e) => setFollowupForm({ ...followupForm, followup_time: e.target.value })} />
-            <input className="form-control" style={{ flex: 1, minWidth: '150px' }} placeholder="Notes" value={followupForm.notes} onChange={(e) => setFollowupForm({ ...followupForm, notes: e.target.value })} />
+            <input type="date" className="form-control" style={{ flex: '1 1 140px', minWidth: '120px' }} value={followupForm.followup_date} onChange={(e) => setFollowupForm({ ...followupForm, followup_date: e.target.value })} required />
+            <input type="time" className="form-control" style={{ flex: '1 1 110px', minWidth: '100px' }} value={followupForm.followup_time} onChange={(e) => setFollowupForm({ ...followupForm, followup_time: e.target.value })} />
+            <input className="form-control" style={{ flex: '3 1 140px', minWidth: '120px' }} placeholder="Notes" value={followupForm.notes} onChange={(e) => setFollowupForm({ ...followupForm, notes: e.target.value })} />
             <button type="submit" className="btn btn-primary btn-sm">Add</button>
           </form>
 
