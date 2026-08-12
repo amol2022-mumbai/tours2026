@@ -22,6 +22,18 @@ app.get('/api/health', (req, res) => {
 app.get('/api/diagnose', async (req, res) => {
   const r = {};
 
+  // 0. Env var presence (no values)
+  r.envVars = {
+    DB_HOST: process.env.DB_HOST ? 'SET' : 'MISSING',
+    DB_PORT: process.env.DB_PORT ? 'SET' : 'MISSING',
+    DB_USER: process.env.DB_USER ? 'SET' : 'MISSING',
+    DB_PASSWORD: process.env.DB_PASSWORD ? 'SET' : 'MISSING',
+    DB_NAME: process.env.DB_NAME ? 'SET' : 'MISSING',
+    JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'MISSING',
+    NODE_ENV: process.env.NODE_ENV || 'MISSING',
+    PORT: process.env.PORT ? 'SET' : 'MISSING',
+  };
+
   try {
     const pool = require('./config/db');
     const bcrypt = require('bcryptjs');
