@@ -19,6 +19,20 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/diag', async (req, res) => {
+  const r = {};
+  try {
+    const pool = require('./config/db');
+    await pool.query('SELECT 1');
+    r.mysql = 'OK';
+  } catch (e) { r.mysql = e.code || 'ERROR'; r.mysqlMsg = e.message; }
+  r.jwt = process.env.JWT_SECRET ? 'OK' : 'MISSING';
+  r.dbHost = process.env.DB_HOST || '(default)';
+  r.dbUser = process.env.DB_USER || '(default)';
+  r.dbName = process.env.DB_NAME || '(default)';
+  res.json(r);
+});
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/leads', require('./routes/leads'));
