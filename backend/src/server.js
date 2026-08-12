@@ -19,17 +19,80 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.get('/api/diag', async (req, res) => {
+app.get('/api/diagnose', async (req, res) => {
   const r = {};
+
   try {
     const pool = require('./config/db');
-    await pool.query('SELECT 1');
-    r.mysql = 'OK';
-  } catch (e) { r.mysql = e.code || 'ERROR'; r.mysqlMsg = e.message; }
-  r.jwt = process.env.JWT_SECRET ? 'OK' : 'MISSING';
-  r.dbHost = process.env.DB_HOST || '(default)';
-  r.dbUser = process.env.DB_USER || '(default)';
-  r.dbName = process.env.DB_NAME || '(default)';
+    const bcrypt = require('bcryptjs');
+
+    // 1. MySQL connection
+    try {
+      await pool.query('SELECT 1');
+      r.mysql = 'SUCCESS';
+    } catch (e) {
+      r.mysql = 'FAILED';
+      r.mysqlError = e.code || 'UNKNOWN';
+      r.mysqlMessage = e.message;
+      return res.json(r);
+    }
+
+    // 2. Required database tables
+    const requiredTables = [
+      'users', 'leads', 'followups', 'customers', 'tour_packages',
+      'itinerary_days', 'suppliers', 'quotations', 'bookings',
+      'payments', 'expenses', 'documents', 'marketing_leads',
+      'reminders', 'alerts', 'tour_transport', 'tour_hotels'
+    ];
+    const [existing] = await pool.query(
+      'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = ?',
+      [process.env.DB_NAME]
+    );
+    const existingNames = existing.map(t => t.TABLE_NAME);
+    const missingTables = requiredTables.filter(t => !existingNames.includes(t));
+    r.tables = missingTables.length === 0 ? 'EXISTS' : 'MISSING';
+    if (missingTables.length > 0) r.missingTables = missingTables;
+
+    // 3. Admin user existence
+    const [adminRows] = await pool.query(
+      'SELECT id, name, email, password, role, status FROM users WHERE email = ?',
+      ['admin@touroperator.com']
+    );
+    r.adminUser = adminRows.length > 0 ? 'EXISTS' : 'MISSING';
+
+    // 4. Password verification
+    if (adminRows.length > 0) {
+      try {
+        const pwMatch = await bcrypt.compare('admin123', adminRows[0].password);
+        r.passwordCheck = pwMatch ? 'SUCCESS' : 'FAILED';
+      } catch (e) {
+        r.passwordCheck = 'ERROR';
+        r.passwordError = 'hash verification failed';
+      }
+    } else {
+      r.passwordCheck = 'SKIPPED';
+    }
+
+    // 5. JWT configuration
+    r.jwtSecret = process.env.JWT_SECRET ? 'SET' : 'MISSING';
+    r.jwtExpires = process.env.JWT_EXPIRES_IN || '7d';
+
+    // 6. Test JWT sign
+    if (process.env.JWT_SECRET && adminRows.length > 0) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const testToken = jwt.sign({ id: 0 }, process.env.JWT_SECRET, { expiresIn: '1s' });
+        r.jwtTest = testToken ? 'SUCCESS' : 'FAILED';
+      } catch (e) {
+        r.jwtTest = 'FAILED';
+        r.jwtTestError = e.message;
+      }
+    }
+
+  } catch (e) {
+    r.error = e.message;
+  }
+
   res.json(r);
 });
 
