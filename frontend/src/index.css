@@ -362,3 +362,143 @@ tr:hover { background: var(--gray-50); }
 .gap-md { gap: 12px; }
 .w-full { width: 100%; }
 .text-center { text-align: center; }
+
+/* ========================================
+   DESKTOP LAYOUT ENHANCEMENTS (1280px+)
+   Does not affect mobile or tablet.
+   ======================================== */
+@media (min-width: 1280px) {
+  .page-container {
+    padding: 20px 24px;
+    max-width: 100%;
+  }
+
+  .page-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .main-content {
+    margin-left: var(--sidebar-width);
+  }
+
+  /* Multi-column grids for desktop */
+  .grid-2 { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+  /* Multi-column forms on desktop */
+  .form-row-desktop {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .form-row-desktop-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  /* Cards - more breathing room */
+  .card {
+    padding: 20px;
+  }
+
+  .card-header h3 {
+    font-size: 1rem;
+  }
+
+  /* Stat cards */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  /* Tables - wider reading */
+  .data-table th,
+  .data-table td {
+    padding: 12px 16px;
+  }
+
+  th, td {
+    padding: 12px 16px;
+  }
+
+  /* Detail grid - 3-4 columns on desktop */
+  .detail-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  /* Modal - wider on desktop */
+  .modal {
+    max-width: 700px;
+  }
+
+  /* Empty state - more padding */
+  .empty-state {
+    padding: 48px 24px;
+  }
+
+  /* Desktop filter bar - inline side by side */
+  .filter-bar {
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .filter-bar select,
+  .filter-bar input {
+    min-width: 140px;
+  }
+
+  /* Desktop search */
+  .search-bar input {
+    max-width: 360px;
+  }
+
+  /* Desktop pagination */
+  .pagination {
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .pagination button {
+    padding: 8px 14px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .page-container {
+    padding: 24px 32px;
+  }
+
+  .modal {
+    max-width: 800px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+  }
+
+  .detail-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .page-container {
+    padding: 28px 40px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 14px 20px;
+  }
+}

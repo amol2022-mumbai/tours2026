@@ -176,6 +176,7 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/staff', require('./routes/staff'));
 app.use('/api/marketing', require('./routes/marketing'));
 app.use('/api/reminders', require('./routes/reminders'));
+app.use('/api/ai', require('./routes/ai'));
 
 app.all('/api', (req, res) => res.status(404).json({ error: 'API route not found' }));
 app.all('/api/*', (req, res) => res.status(404).json({ error: 'API route not found' }));

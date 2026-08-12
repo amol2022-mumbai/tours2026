@@ -261,3 +261,108 @@
   .chart-bar-wrapper { max-width: 32px; }
   .chart-container { overflow-x: auto; }
 }
+
+/* ========================================
+   DESKTOP LAYOUT ENHANCEMENTS (1280px+)
+   Does not affect mobile or tablet.
+   ======================================== */
+@media (min-width: 1280px) {
+  .dashboard {
+    max-width: 100%;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .chart-bars {
+    height: 200px;
+    gap: 12px;
+  }
+
+  .chart-bar-wrapper {
+    max-width: 56px;
+  }
+
+  .chart-summary {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+  }
+
+  .funnel-chart {
+    gap: 8px;
+  }
+
+  .funnel-bar-wrapper {
+    height: 26px;
+  }
+
+  .funnel-label {
+    width: 80px;
+    font-size: 0.82rem;
+  }
+
+  .funnel-pct {
+    width: 44px;
+    font-size: 0.78rem;
+  }
+
+  .compact-table th {
+    padding: 10px 14px;
+    font-size: 0.75rem;
+  }
+
+  .compact-table td {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+
+  .truncate-cell {
+    max-width: 200px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .kpi-grid {
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .dashboard-grid {
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+
+  .chart-bars {
+    height: 220px;
+    gap: 14px;
+  }
+
+  .chart-bar-wrapper {
+    max-width: 64px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 24px;
+  }
+
+  .dashboard-grid {
+    gap: 28px;
+  }
+
+  .chart-bars {
+    height: 240px;
+    gap: 16px;
+  }
+}
