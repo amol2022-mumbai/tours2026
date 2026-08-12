@@ -19,6 +19,97 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/diagnose', async (req, res) => {
+  const pool = require('./config/db');
+  const bcrypt = require('bcryptjs');
+  const result = {};
+
+  // 1. MySQL connection
+  try {
+    const [rows] = await pool.query('SELECT 1 AS val');
+    result.mysql = rows[0].val === 1 ? 'SUCCESS' : 'FAILED';
+  } catch (err) {
+    result.mysql = 'FAILED';
+    result.mysqlError = err.code || err.message;
+  }
+
+  // 2. Tables
+  if (result.mysql === 'SUCCESS') {
+    try {
+      const [tables] = await pool.query(
+        "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'"
+      );
+      result.tables = tables.length > 0 ? 'EXISTS' : 'MISSING';
+    } catch (err) {
+      result.tables = 'ERROR';
+      result.tablesError = err.code || err.message;
+    }
+  }
+
+  // 3. Admin user
+  if (result.mysql === 'SUCCESS') {
+    try {
+      const [users] = await pool.query(
+        'SELECT id, name, email, role, status, password FROM users WHERE email = ?',
+        ['admin@touroperator.com']
+      );
+      if (users.length === 0) {
+        result.adminUser = 'MISSING';
+        const [cnt] = await pool.query('SELECT COUNT(*) as c FROM users');
+        result.totalUsers = cnt[0].c;
+      } else {
+        result.adminUser = 'EXISTS';
+        result.adminRole = users[0].role;
+        result.adminStatus = users[0].status;
+
+        // Password verification
+        try {
+          const isMatch = await bcrypt.compare('admin123', users[0].password);
+          result.passwordVerification = isMatch ? 'SUCCESS' : 'FAILED';
+          if (!isMatch) {
+            result.passwordHashFormat = users[0].password.substring(0, 7);
+          }
+        } catch (err) {
+          result.passwordVerification = 'ERROR';
+          result.passwordError = err.code || err.message;
+        }
+      }
+    } catch (err) {
+      result.adminUser = 'ERROR';
+      result.adminUserError = err.code || err.message;
+    }
+  }
+
+  // 4. JWT_SECRET
+  result.jwtSecret = process.env.JWT_SECRET ? 'SET' : 'NOT SET';
+
+  // 5. Login API test
+  if (result.mysql === 'SUCCESS' && result.adminUser === 'EXISTS' && result.passwordVerification === 'SUCCESS' && result.jwtSecret === 'SET') {
+    try {
+      const jwt = require('jsonwebtoken');
+      const [users] = await pool.query(
+        'SELECT id, email, role, name FROM users WHERE email = ?',
+        ['admin@touroperator.com']
+      );
+      const u = users[0];
+      const token = jwt.sign(
+        { id: u.id, email: u.email, role: u.role, name: u.name },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+      jwt.verify(token, process.env.JWT_SECRET);
+      result.loginApi = 'SUCCESS';
+    } catch (err) {
+      result.loginApi = 'FAILED';
+      result.loginApiError = err.code || err.message;
+    }
+  } else {
+    result.loginApi = 'SKIPPED';
+  }
+
+  res.json(result);
+});
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/leads', require('./routes/leads'));

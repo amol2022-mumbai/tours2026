@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 const pool = require('../../config/db');
 const { auth } = require('../../middleware/auth');
-require('dotenv').config();
+require('dotenv').config({ path: path.resolve(__dirname, '..', '..', '..', '.env') });
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
