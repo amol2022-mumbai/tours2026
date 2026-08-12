@@ -33,6 +33,7 @@ app.get('/api/diagnose', async (req, res) => {
     NODE_ENV: process.env.NODE_ENV || 'MISSING',
     PORT: process.env.PORT ? 'SET' : 'MISSING',
   };
+  r.envFileOnDisk = fs.existsSync(path.resolve(__dirname, '..', '.env'));
 
   try {
     const pool = require('./config/db');
