@@ -55,23 +55,18 @@ app.get('/api/diagnose', async (req, res) => {
     const bcrypt = require('bcryptjs');
     const mysql = require('mysql2/promise');
 
-    // 0.2 Cross-check: read pool's internal config
+    // 0.2 Cross-check: pool config vs process.env
     try {
-      const poolConfig = pool.pool ? pool.pool.config : null;
-      if (poolConfig) {
+      const getCfg = pool.__getConfig;
+      if (getCfg) {
+        const cfg = getCfg();
         r.poolMatchesEnv = {
-          host: (poolConfig.host === process.env.DB_HOST),
-          port: (poolConfig.port === parseInt(process.env.DB_PORT || '3306', 10)),
-          user: (poolConfig.user === process.env.DB_USER),
-          database: (poolConfig.database === process.env.DB_NAME),
+          host: (cfg.host === process.env.DB_HOST),
+          port: (cfg.port === parseInt(process.env.DB_PORT || '3306', 10)),
+          user: (cfg.user === process.env.DB_USER),
+          database: (cfg.database === process.env.DB_NAME),
         };
-        r.poolConfig = {
-          host: poolConfig.host,
-          port: poolConfig.port,
-          user: poolConfig.user,
-          database: poolConfig.database,
-          ssl: typeof poolConfig.ssl !== 'undefined',
-        };
+        r.poolConfig = { ...cfg, ssl: typeof cfg.ssl !== 'undefined' };
       }
     } catch (_) { /* pool inspection failed */ }
 
