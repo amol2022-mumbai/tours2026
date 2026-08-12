@@ -1,0 +1,3 @@
+PassengerEnabled on
+PassengerAppType node
+PassengerStartupFile app.js
