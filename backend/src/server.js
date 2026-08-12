@@ -35,6 +35,21 @@ app.get('/api/diagnose', async (req, res) => {
   };
   r.envFileOnDisk = fs.existsSync(path.resolve(__dirname, '..', '.env'));
 
+  // 0.1 Actual connection values (NO password)
+  r.dbConfig = {
+    host: process.env.DB_HOST || '(default: localhost)',
+    port: parseInt(process.env.DB_PORT || '3306', 10),
+    user: process.env.DB_USER || '(default: root)',
+    database: process.env.DB_NAME || '(default: tour_operator)',
+  };
+  r.dbConfigSource = {
+    host: process.env.DB_HOST ? 'process.env' : 'fallback',
+    port: process.env.DB_PORT ? 'process.env' : 'fallback',
+    user: process.env.DB_USER ? 'process.env' : 'fallback',
+    password: process.env.DB_PASSWORD ? 'process.env' : 'fallback(empty)',
+    database: process.env.DB_NAME ? 'process.env' : 'fallback',
+  };
+
   try {
     const pool = require('./config/db');
     const bcrypt = require('bcryptjs');
