@@ -53,8 +53,48 @@ app.get('/api/diagnose', async (req, res) => {
   try {
     const pool = require('./config/db');
     const bcrypt = require('bcryptjs');
+    const mysql = require('mysql2/promise');
 
-    // 1. MySQL connection
+    // 0.2 Cross-check: read pool's internal config
+    try {
+      const poolConfig = pool.pool ? pool.pool.config : null;
+      if (poolConfig) {
+        r.poolMatchesEnv = {
+          host: (poolConfig.host === process.env.DB_HOST),
+          port: (poolConfig.port === parseInt(process.env.DB_PORT || '3306', 10)),
+          user: (poolConfig.user === process.env.DB_USER),
+          database: (poolConfig.database === process.env.DB_NAME),
+        };
+        r.poolConfig = {
+          host: poolConfig.host,
+          port: poolConfig.port,
+          user: poolConfig.user,
+          database: poolConfig.database,
+          ssl: typeof poolConfig.ssl !== 'undefined',
+        };
+      }
+    } catch (_) { /* pool inspection failed */ }
+
+    // 0.3 Direct connection test (fresh, from process.env, no pool)
+    try {
+      const directConn = await mysql.createConnection({
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT || '3306', 10),
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        connectTimeout: 10000,
+      });
+      await directConn.query('SELECT 1');
+      r.directConnection = 'SUCCESS';
+      await directConn.end();
+    } catch (e) {
+      r.directConnection = 'FAILED';
+      r.directError = e.code || 'UNKNOWN';
+      r.directMessage = e.message;
+    }
+
+    // 1. MySQL connection (pool)
     try {
       await pool.query('SELECT 1');
       r.mysql = 'SUCCESS';
